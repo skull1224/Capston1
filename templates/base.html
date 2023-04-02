@@ -1,0 +1,41 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MY HOME CCTV</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        function toggleMenu() {
+            var navbar = document.getElementById("navbar");
+            if (navbar.className === "nav") {
+                navbar.className += " responsive";
+            } else {
+                navbar.className = "nav";
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <nav class="nav" id="navbar">
+        <a class="nav-brand" href="/">MY HOME CCTV</a>
+        <div class="nav-right">
+            <a class="nav-link" href="/login">로그인</a>
+            <a class="nav-link" href="/signup">회원가입</a>
+        </div>
+        <a class="icon" href="javascript:void(0);" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </a>
+    </nav>
+    <div class="content-container">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+
+</html>
