@@ -1,4 +1,3 @@
-#
 import cv2
 import datetime
 import random
@@ -80,7 +79,7 @@ def process_frame():
                     cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
 
                 # 대기
-                cv2.waitKey(5000)
+                cv2.waitKey(500)
 
             # 화면에 출력
             cv2.imshow('얼굴 인식', frame)
