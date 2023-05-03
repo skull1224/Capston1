@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session
 import firebase_admin
 from firebase_admin import credentials, db
 import re
+from flask import redirect
 
 app = Flask(__name__)
 app.secret_key = 'capston1_4'
@@ -45,6 +46,7 @@ def login():
 def signup():
     if request.method == 'POST':
         email = request.form['email']
+        phone = request.form['phone']
         password = request.form['password']
 
         # 이메일 유효성 검사
@@ -65,14 +67,16 @@ def signup():
             # Realtime Database에 유저 정보 저장하기
             ref.push({
                 'email': email,
+                'phone': phone,
                 'password': password
             })
 
-            return render_template('signup.html', message='회원가입이 완료되었습니다.')
+            return "<script>alert('회원가입이 완료되었습니다.');location.href='/login';</script>"
         except Exception as e:
             return render_template('signup.html', message=f'회원가입 중 오류가 발생했습니다.{(e)}')
     else:
         return render_template('signup.html')
+
 
 # 로그아웃
 
@@ -83,14 +87,24 @@ def logout():
     return redirect('/')
 
 
-# 인증된 사용자만 접근 가능한 페이지
 @app.route('/')
 def index():
     if 'user' in session:
-        # Realtime Database에서 출입 기록 가져오기
-        access_ref = db.reference('access')
-        access = access_ref.get()
-        return render_template('index.html', access=access)
+        # Firebase에서 출입 로그 가져오기
+        logs_ref = db.reference('logs')
+        logs = logs_ref.get()
+
+        # 출입 로그 데이터 정제
+        log_list = []
+        if logs:
+            for key, log in logs.items():
+                log['key'] = key  # 로그의 키 추가
+                log_list.append(log)
+
+        # 최신 출입 로그부터 정렬
+        log_list = sorted(log_list, key=lambda x: x['time'], reverse=True)
+
+        return render_template('logs.html', logs=log_list)
     else:
         return redirect('/login')
 
