@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, session
 import firebase_admin
 from firebase_admin import credentials, db
-import re
+import re  # 정규식
 from flask import redirect
 
 app = Flask(__name__)
