@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+  <h2>Live Streaming</h2>
+  <div class="streaming-wrapper">
+    <div class="streaming-container">
+      <img src="{{ url_for('live_streaming') }}" class="img-responsive" onerror="this.style.display='none'">
+    </div>
+    <div class="logs-container">
+      <h2>Logs</h2>
+      {% for log in logs %}
+      <div class="log-entry">
+        {{ log.date }} {{ log.time }} {% if log.is_registered %}(Registered){% else %}(Not registered){% endif %}
+      </div>
+      {% endfor %}
+      <a href="/logs" class="btn">View More</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -284,3 +284,22 @@ input[type="tel"] {
     color: #fff;
   }
   
+  .stream-and-log {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-top: 20px;
+}
+
+.stream {
+    flex: 1;
+    margin-right: 20px;
+}
+
+.logs-container {
+    flex: 1;
+}
+
+
+
+  
