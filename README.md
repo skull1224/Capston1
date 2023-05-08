@@ -35,27 +35,39 @@
 
 
 
-#캡스톤 9주차 진행사항
+# 캡스톤 9주차 진행사항
 
-##기능 개요
-   -로그인 및 회원가입에 전화번호 유효성검사추가
-   -실시간 스트리밍 화면 구현
-   -현재 웹캠으로 구현, 추후 라즈베리파이 카메라로 연결할 예정
-   -출입 로그 데이터베이스 전송 및 받아오기 구현
-   -받아오는 것은 가능하지만 출력이 제대로 되지 않아 수정이 필요함
-   -로그인 시 출입 로그를 보여주는 페이지로 이동 구현
-   -로그인 시 로그인 세션 유지 후 로그아웃 기능 구현
-##기술 스택
-   -Front-end: HTML, CSS, JavaScript
-   -Back-end:  Flask
-   -Database: Firebase 
+## 기능 개요
+- 로그인 및 회원가입에 전화번호 유효성검사추가
+    ![image](https://user-images.githubusercontent.com/99471821/236740245-67e041bc-f23e-47b3-9e24-1051f2cd38ec.png)
+    
+- 실시간 스트리밍 화면 구현
+    - 현재 웹캠으로 구현, 추후 라즈베리파이 카메라로 연결할 예정
+    ![Untitled (3)](https://user-images.githubusercontent.com/99471821/236741096-1608a0c0-e672-4bfa-af3f-fb9434e1346f.png)
+        - 이 얼굴이 학습된 얼굴이면 등록됨 아니면 미등록 으로 기록하는 출입로그를 작성할것입니다
+    
+- 출입 로그 데이터베이스 전송 및 받아오기 구현
+    - 받아오는 것은 가능하지만 출력이 제대로 되지 않아 수정이 필요함 현재는 출력은 더미데이터를 이용하고 있습니다
+     ###  구현 현황
+     
+     -  출입로그가 없을시
+        ![Untitled (2)](https://user-images.githubusercontent.com/99471821/236741025-33a0f5b5-60ea-46be-aeec-a37331cf8db9.png)
+     - 더미데이터
+        ![Untitled (1)](https://user-images.githubusercontent.com/99471821/236740963-5f197c5e-57cb-4031-bd15-c810a97d9546.png)
+     - DB에 기록
+        ![Untitled](https://user-images.githubusercontent.com/99471821/236740801-d4b52952-07cd-41da-a7ea-ea2d044e5ec9.png)
 
-##실행 방법
-   -레포지토리를 클론합니다.
-   -.env 파일을 생성하고, 필요한 환경 변수를 설정합니다.
+    
+- 로그인 시 출입 로그를 보여주는 페이지로 이동 구현
+    
+- 로그인 시 로그인 세션 유지 후 로그아웃 기능 구현
+    ![image](https://user-images.githubusercontent.com/99471821/236741325-b32f251e-2adc-457f-9005-8a511d1aac51.png)
 
-##기여 방법
-   -이 레포지토리를 포크합니다.
-   -새로운 브랜치를 만들어서 작업합니다.
-   -변경 사항을 커밋하고, 포크한 레포지토리에 푸시합니다.
-   -Pull Request를 작성하여 변경 사항을 제안합니다.
+
+## 기술 스택
+- Front-end: HTML, CSS, JavaScript
+- Back-end: Flask
+- Database: Firebase 
+
+## 실행 방법
+1.Flask파일들을 라우팅하여 실행
