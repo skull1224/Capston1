@@ -7,9 +7,19 @@ from flask import Flask, render_template, Response, request, session, redirect
 from functools import wraps
 import re
 import hashlib
+import socket
+import numpy as np
+import struct
 
 app = Flask(__name__)
 app.secret_key = 'capston1_4'
+
+# Server configuration
+server_ip = '192.168.0.27'
+port = 8485
+
+# 전역 소켓 연결
+client_socket = None
 
 # Firebase Admin SDK 초기화
 cred = credentials.Certificate('serviceAccountKey.json')
@@ -32,49 +42,67 @@ def login_required(f):
 
 
 def gen_frames():
-    capture = cv2.VideoCapture(0)
-    capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-
+    global client_socket
     while True:
-        success, frame = capture.read()
-        if not success:
-            break
-        else:
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray,
-                                                  scaleFactor=1.1,
-                                                  minNeighbors=5,
-                                                  minSize=(30, 30),
-                                                  flags=cv2.CASCADE_SCALE_IMAGE)
-            # 얼굴이 인식되면
-            if len(faces) > 0:
-                now = datetime.datetime.now()
-                date = now.strftime('%Y-%m-%d')
-                time = now.strftime('%H:%M:%S')
+        try:
+            # 이미 연결이 되어 있지 않은 경우에만 새 연결을 생성
+            if client_socket is None:
+                client_socket = socket.socket(
+                    socket.AF_INET, socket.SOCK_STREAM)
+                client_socket.connect((server_ip, port))
 
-                # 랜덤으로 얼굴이 등록되었는지 여부 기록
-                is_registered = random.choice([True, False])
+            while True:
+                data_size = struct.unpack("I", client_socket.recv(4))[0]
+                frame_data = b''
+                while len(frame_data) < data_size:
+                    recv_data = client_socket.recv(
+                        min(1024, data_size - len(frame_data)))
+                    if not recv_data:
+                        break
+                    frame_data += recv_data
 
-                # 출입로그 데이터 작성
-                log = {
-                    'date': date,
-                    'time': time,
-                    'is_registered': is_registered
-                }
+                nparr = np.frombuffer(frame_data, np.uint8)
+                frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+                frame = cv2.flip(frame, 1)  # 얼굴 좌우 반전
 
-                # Firebase에 출입로그 데이터 추가
-                ref_logs.push(log)
+                gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+                faces = face_cascade.detectMultiScale(gray,
+                                                      scaleFactor=1.1,
+                                                      minNeighbors=5,
+                                                      minSize=(30, 30),
+                                                      flags=cv2.CASCADE_SCALE_IMAGE)
+                # 얼굴이 인식되면
+                if len(faces) > 0:
+                    now = datetime.datetime.now()
+                    date = now.strftime('%Y-%m-%d')
+                    time = now.strftime('%H:%M:%S')
 
-            for (x, y, w, h) in faces:
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+                    # 랜덤으로 얼굴이 등록되었는지 여부 기록
+                    is_registered = random.choice([True, False])
 
-            ret, buffer = cv2.imencode('.jpg', frame)
-            frame = buffer.tobytes()
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                    # 출입로그 데이터 작성
+                    log = {
+                        'date': date,
+                        'time': time,
+                        'is_registered': is_registered
+                    }
 
-    capture.release()
+                    # Firebase에 출입로그 데이터 추가
+                    ref_logs.push(log)
+
+                for (x, y, w, h) in faces:
+                    cv2.rectangle(frame, (x, y), (x + w, y + h),
+                                  (255, 0, 0), 2)
+
+                ret, buffer = cv2.imencode('.jpg', frame)
+                frame = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        except Exception as e:
+            print(f"Error in gen_frames(): {e}")
+            client_socket.close()
+            client_socket = None  # 소켓 연결을 재설정
+            time.sleep(1)  # wait before reconnect
 
 
 @app.route('/')
@@ -86,18 +114,14 @@ def index():
         if logs:
             for key, log in logs.items():
                 log['key'] = key
+                log['datetime'] = datetime.datetime.strptime(
+                    log['date'] + ' ' + log['time'], '%Y-%m-%d %H:%M:%S')
                 log_list.append(log)
 
-        log_list = sorted(log_list, key=lambda x: x['time'], reverse=True)
+        log_list = sorted(log_list, key=lambda x: x['datetime'], reverse=True)
         return render_template('streaming.html', logs=log_list[:10])
     else:
         return redirect('/login')
-
-
-@app.route('/live_streaming')
-@login_required
-def live_streaming():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/logs')
@@ -109,11 +133,19 @@ def logs():
     if logs:
         for key, log in logs.items():
             log['key'] = key
+            log['datetime'] = datetime.datetime.strptime(
+                log['date'] + ' ' + log['time'], '%Y-%m-%d %H:%M:%S')
             log_list.append(log)
 
-    log_list = sorted(log_list, key=lambda x: x['time'], reverse=True)
+    log_list = sorted(log_list, key=lambda x: x['datetime'], reverse=True)
 
     return render_template('logs.html', logs=log_list)
+
+
+@app.route('/live_streaming')
+@login_required
+def live_streaming():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -191,4 +223,50 @@ def logout():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="192.168.0.30", port=8080, debug=True)
+
+
+# def gen_frames():
+#     capture = cv2.VideoCapture(0)
+#     capture.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+#     capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+
+#     while True:
+#         success, frame = capture.read()
+#         if not success:
+#             break
+#         else:
+#             gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+#             faces = face_cascade.detectMultiScale(gray,
+#                                                   scaleFactor=1.1,
+#                                                   minNeighbors=5,
+#                                                   minSize=(30, 30),
+#                                                   flags=cv2.CASCADE_SCALE_IMAGE)
+#             # 얼굴이 인식되면
+#             if len(faces) > 0:
+#                 now = datetime.datetime.now()
+#                 date = now.strftime('%Y-%m-%d')
+#                 time = now.strftime('%H:%M:%S')
+
+#                 # 랜덤으로 얼굴이 등록되었는지 여부 기록
+#                 is_registered = random.choice([True, False])
+
+#                 # 출입로그 데이터 작성
+#                 log = {
+#                     'date': date,
+#                     'time': time,
+#                     'is_registered': is_registered
+#                 }
+
+#                 # Firebase에 출입로그 데이터 추가
+#                 ref_logs.push(log)
+
+#             for (x, y, w, h) in faces:
+#                 cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
+
+#             ret, buffer = cv2.imencode('.jpg', frame)
+#             frame = buffer.tobytes()
+#             yield (b'--frame\r\n'
+#                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+#     capture.release()
