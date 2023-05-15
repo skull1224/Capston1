@@ -91,21 +91,21 @@ def gen_frames():
 
                         if result[0][0] > 0.7:
                             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-                            cv2.putText(frame, '등록됨', (x, y-10),
+                            cv2.putText(frame, 'Pass', (x, y-10),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 255, 0), 2)
                             ref_logs.push({
                                 'date': date,
                                 'time': current_time,
-                                'status': 'Registered'
+                                'is_registered': 'Registered'
                             })
                         else:
                             cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 0, 255), 2)
-                            cv2.putText(frame, '미등록', (x, y-10),
+                            cv2.putText(frame, 'X', (x, y-10),
                                         cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
                             ref_logs.push({
                                 'date': date,
                                 'time': current_time,
-                                'status': 'Unregistered'
+                                'is_registered': 'Unregistered'
                             })
 
                 ret, buffer = cv2.imencode('.jpg', frame)

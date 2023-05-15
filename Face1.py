@@ -40,7 +40,7 @@ def face_extractor(img):
 cap = cv2.VideoCapture(0)
 count = 0
 
-# Check if faces directory exists and if not, create it
+
 if not os.path.exists('faces'):
     os.makedirs('faces')
 

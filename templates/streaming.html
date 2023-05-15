@@ -23,18 +23,19 @@
             <td>{{ log.date }}</td>
             <td>{{ log.time }}</td>
             <td>
-              {% if log.is_registered %}
+              {% if log.is_registered == 'Registered' %}
                 <span class="log-face success"></span> 등록됨
               {% else %}
                 <span class="log-face fail"></span> 미등록
               {% endif %}
             </td>
           </tr>
-          {% else %}
+        {% else %}
           <tr>
             <td colspan="3">출입 로그가 없습니다.</td>
           </tr>
-          {% endfor %}
+        {% endfor %}
+        
         </tbody>
       </table>
       <a href="/logs" class="btn">상세보기</a>

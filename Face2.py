@@ -82,7 +82,7 @@ for i, files in enumerate(onlyfiles):
         Labels.append(label)
 
 if len(Labels) == 0:
-    print("There is no data to train.")
+    print("학습된 데이터셋이 없습니다.")
     exit()
 
 Labels = np.asarray(Labels, dtype=np.int32)
@@ -90,4 +90,4 @@ Labels = np.asarray(Labels, dtype=np.int32)
 model = cv2.face.LBPHFaceRecognizer_create()
 model.train(np.asarray(Training_Data), np.asarray(Labels))
 
-print("Model Training Complete!!!!!")
+print("모델 학습이 완료 되었습니다")
